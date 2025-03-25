@@ -116,6 +116,7 @@ const App = () => {
       <PersonForm
         addName={addName}
         newName={newName}
+        newNumber={newNumber}
         handleNameChange={handleNameChange}
         handleNumberChange={handleNumberChange}
       /> 

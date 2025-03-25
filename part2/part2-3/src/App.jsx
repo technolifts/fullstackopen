@@ -14,6 +14,12 @@ const App = () => {
   // Handler for form submission
   const addName = (event) => {
     event.preventDefault() // Prevent default form submission
+
+    if(persons.some(person => person.name == newName)) {
+      alert(`${newName} is already added to phonebook`)
+      setNewName('')
+      return
+    }
     
     const nameObject = {
       name: newName
@@ -26,9 +32,6 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
-      
-      {/* Debug element */}
-      <div>debug: {newName}</div>
       
       <form onSubmit={addName}>
         <div>

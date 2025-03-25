@@ -5,10 +5,16 @@ const App = () => {
     { name: 'Arto Hellas' }
   ]) 
   const [newName, setNewName] = useState('')
+  const [newNumber, setNewNumber] = useState('')
 
   // Handler for input change
   const handleNameChange = (event) => {
     setNewName(event.target.value)
+  }
+
+  // Handler for number change
+  const handleNumberChange = (event) => {
+    setNewNumber(event.target.value)
   }
 
   // Handler for form submission
@@ -22,7 +28,8 @@ const App = () => {
     }
     
     const nameObject = {
-      name: newName
+      name: newName,
+      number: newNumber
     }
     
     setPersons(persons.concat(nameObject))
@@ -41,6 +48,12 @@ const App = () => {
                 />
         </div>
         <div>
+          number: <input
+                    value={newNumber}
+                    onChange={handleNumberChange}
+                  />
+        </div>
+        <div>
           <button type="submit">add</button>
         </div>
       </form>
@@ -48,7 +61,7 @@ const App = () => {
       <h2>Numbers</h2>
       <div>
         {persons.map(person => 
-          <div key={person.name}>{person.name}</div>
+          <div key={person.name}>{person.name} {person.number}</div>
         )}
       </div>
     </div>

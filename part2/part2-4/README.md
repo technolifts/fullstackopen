@@ -29,3 +29,5 @@ From part 3 onwards, the frontend is used with a [separate backend](https://gith
 The different stages of the application are saved in different branches. Switching branches changes the code in your working directory to match the state of the branch you switched to. This allows you to work on different versions of the application without affecting the codebase of other branches.
 
 You can switch to the desired branch by running the command `git switch <branch-name>`, for example `git switch part2-2`. Note that new dependencies are added to the application as development progresses, so after switching branches, it is safest to run the command `npm install` to ensure that any missing node modules will be installed on your machine.
+
+test

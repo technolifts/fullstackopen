@@ -36,23 +36,25 @@ const PersonForm = (props) => {
   )
 }
 
-const Person = ({ name, number }) => {
+const Person = ({ name, number, onDelete, id }) => {
   return (
     <div>
       {name} {number}
+      <button onClick={() => onDelete(id)}>delete</button> {/* Add the delete button */}
     </div>
   )
-
 }
 
-const Persons = ({ persons }) => {
+const Persons = ({ persons, onDelete }) => {
   return (
     <div>
       {persons.map(person =>
         <Person
-          key={person.name}
+          key={person.id}
           name={person.name}
           number={person.number}
+          id={person.id} 
+          onDelete={onDelete} // Receive the onDelete function as a prop
         />
       )}
     </div>
@@ -98,31 +100,63 @@ const App = () => {
   const addName = (event) => {
     event.preventDefault() // Prevent default form submission
 
-    if(persons.some(person => person.name === newName)) {
-      alert(`${newName} is already added to phonebook`)
-      setNewName('')
-      setNewNumber('')
-      return
-    }
+    const existingPerson = persons.find(person => person.name == newName)
+
+    if (existingPerson) {
+      const confirmUpdate = window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`);
+      if (confirmUpdate) {
+        const updatedPerson = { ...existingPerson, number: newNumber };
+        noteService
+          .update(existingPerson.id, updatedPerson)
+          .then(returnedPerson => {
+            setPersons(persons.map(p => p.id !== existingPerson.id ? p : returnedPerson));
+            setNewName('');
+            setNewNumber('');
+            console.log(`Number updated for ${returnedPerson.name} on server`);
+          })
+          .catch(error => {
+            alert(`Failed to update the number for ${existingPerson.name}.`);
+            console.error('Error updating person:', error);
+          });
+      }
+    } else {
+      const personObject = {
+        name: newName,
+        number: newNumber,
+      };
     
-    const personObject = {
-      name: newName,
-      number: newNumber
+      noteService
+      .create(personObject) // Send the new person to the server
+      .then(returnedPerson => {
+        setPersons(persons.concat(returnedPerson))
+        setNewName('') // Clear the input field after submission
+        setNewNumber('')
+        console.log("New person added to server")
+      })
+      .catch(error => {
+        alert('Failed to add the person. Please try again.');
+        console.error('Error adding person:', error);
+      });
     }
-    
-    noteService
-    .create(personObject) // Send the new person to the server
-    .then(returnedPerson => {
-      setPersons(persons.concat(returnedPerson))
-      setNewName('') // Clear the input field after submission
-      setNewNumber('')
-      console.log("New person added to server")
-    })
-    .catch(error => {
-      alert('Failed to add the person. Please try again.');
-      console.error('Error adding person:', error);
-    });
   }
+
+  const deletePerson = (id) => {
+    const personToDelete = persons.find(p => p.id === id);
+    const confirmDeletion = window.confirm(`Delete ${personToDelete.name}?`);
+
+    if (confirmDeletion) {
+      noteService
+        .delete(id)
+        .then(() => {
+          setPersons(persons.filter(person => person.id !== id));
+          console.log(`Person with id ${id} deleted from server`);
+        })
+        .catch(error => {
+          alert(`Failed to delete ${personToDelete.name}.`);
+          console.error('Error deleting person:', error);
+        });
+    }
+  };
 
   const filteredPersons = persons.filter(person =>
     person.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -143,7 +177,7 @@ const App = () => {
       /> 
       
       <h2>Numbers</h2>
-      <Persons persons={filteredPersons} />
+      <Persons persons={filteredPersons} onDelete={deletePerson} />
     </div>
   )
 }

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import noteService from './services/persons'
 
 const Filter = (props) => {
   console.log(props)
@@ -59,12 +60,23 @@ const Persons = ({ persons }) => {
 }
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456' }
-  ]) 
+  const [persons, setPersons] = useState([]) 
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+
+  useEffect(() => {
+    console.log('effect')
+    noteService
+      .getAll() // Fetch initial persons from the server
+      .then(initialPersons => {
+        console.log('promise fulfilled')
+        setPersons(initialPersons)
+      })
+      .catch(error => {
+        console.error('Error fetching persons:', error);
+      });
+  }, [])
 
   // Handler for input change
   const handleNameChange = (event) => {
@@ -93,14 +105,23 @@ const App = () => {
       return
     }
     
-    const nameObject = {
+    const personObject = {
       name: newName,
       number: newNumber
     }
     
-    setPersons(persons.concat(nameObject))
-    setNewName('') // Clear the input field after submission
-    setNewNumber('')
+    noteService
+    .create(personObject) // Send the new person to the server
+    .then(returnedPerson => {
+      setPersons(persons.concat(returnedPerson))
+      setNewName('') // Clear the input field after submission
+      setNewNumber('')
+      console.log("New person added to server")
+    })
+    .catch(error => {
+      alert('Failed to add the person. Please try again.');
+      console.error('Error adding person:', error);
+    });
   }
 
   const filteredPersons = persons.filter(person =>

@@ -1,6 +1,8 @@
 const express = require('express')
 const app = express()
 
+app.use(express.json())
+
 let persons = [
     { 
       "id": "1",
@@ -38,7 +40,7 @@ app.get('/info', (request, response) => {
 
     response.send(`
         <p>Phonebook has info for ${entriesCount} people</p>
-        <p>${requestTime}</>
+        <p>${requestTime}</p>
     `)
   })
 
@@ -58,6 +60,47 @@ app.get('/info', (request, response) => {
     const person = persons.find(person => person.id == id)
 
     response.status(204).end()
+  })
+
+  const generateId = () => {
+    return String(Math.floor(Math.random() * 1000000) + 1)
+  }
+
+  app.post('/api/persons', (request, response) => {
+    const body = request.body
+
+    if (!body) {
+        return response.status(400).json({ 
+          error: 'content missing' 
+        })
+      }
+    
+    if(!body.name) {
+        return response.status(400).json({
+            error: 'name missing'
+        })
+      }
+    if(!body.number) {
+        return response.status(400).json({
+            error: 'number missing'
+        })
+      }
+      const nameExists = persons.some(person => person.name === body.name)
+      if (nameExists) {
+        return response.status(400).json({
+          error: 'name must be unique'
+        })
+      }
+
+    const person = {
+        name: body.name,
+        number: body.number,
+        id: generateId(),
+    }
+    persons = [...persons, person]
+
+    response.json(person)
+
   })
 
 const PORT = 3001

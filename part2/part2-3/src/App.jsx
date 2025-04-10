@@ -1,5 +1,19 @@
 import { useState, useEffect } from 'react'
 import noteService from './services/persons'
+import './index.css';
+
+
+const Notification = ({ message, type }) => {
+  if (message === null) {
+    return null
+  }
+
+  return (
+    <div className={type}>
+      {message}
+    </div>
+  )
+}
 
 const Filter = (props) => {
   console.log(props)
@@ -66,6 +80,7 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [notification, setNotification] = useState({ message: null, type: 'success' })
 
   useEffect(() => {
     console.log('effect')
@@ -77,8 +92,16 @@ const App = () => {
       })
       .catch(error => {
         console.error('Error fetching persons:', error);
+        showNotification('Failed to fetch contacts from server', 'error');
       });
   }, [])
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification({ message: null, type: 'success' });
+    }, 5000);
+  };
 
   // Handler for input change
   const handleNameChange = (event) => {
@@ -113,9 +136,17 @@ const App = () => {
             setNewName('');
             setNewNumber('');
             console.log(`Number updated for ${returnedPerson.name} on server`);
+            showNotification(`Updated ${returnedPerson.name}'s number successfully`);
           })
           .catch(error => {
-            alert(`Failed to update the number for ${existingPerson.name}.`);
+            // Check if the error is a 404 Not Found (resource has been deleted)
+            if (error.response && error.response.status === 404) {
+              showNotification(`Information of ${existingPerson.name} has already been removed from server`, 'error');
+              // Remove the deleted person from the state as well
+              setPersons(persons.filter(p => p.id !== existingPerson.id));
+            } else {
+              showNotification(`Failed to update the number for ${existingPerson.name}`, 'error');
+            }
             console.error('Error updating person:', error);
           });
       }
@@ -132,9 +163,10 @@ const App = () => {
         setNewName('') // Clear the input field after submission
         setNewNumber('')
         console.log("New person added to server")
+        showNotification(`Added ${returnedPerson.name} to the phonebook`);
       })
       .catch(error => {
-        alert('Failed to add the person. Please try again.');
+        showNotification('Failed to add the person. Please try again.', 'error');
         console.error('Error adding person:', error);
       });
     }
@@ -146,7 +178,7 @@ const App = () => {
 
     if (confirmDeletion) {
       noteService
-        .delete(id)
+        .deletePerson(id)
         .then(() => {
           setPersons(persons.filter(person => person.id !== id));
           console.log(`Person with id ${id} deleted from server`);
@@ -177,6 +209,7 @@ const App = () => {
       /> 
       
       <h2>Numbers</h2>
+      <Notification message={notification.message} type={notification.type} />
       <Persons persons={filteredPersons} onDelete={deletePerson} />
     </div>
   )
